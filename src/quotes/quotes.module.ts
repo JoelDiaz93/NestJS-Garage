@@ -1,0 +1,3 @@
+import { AuthModule } from '../auth/auth.module';
+import { Module } from '@nestjs/common'; import { TypeOrmModule } from '@nestjs/typeorm'; import { CatalogModule } from '../catalog/catalog.module'; import { ClientsModule } from '../clients/clients.module'; import { VehiclesModule } from '../vehicles/vehicles.module'; import { QuoteItem } from './quote-item.entity'; import { Quote } from './quote.entity'; import { QuotesController } from './quotes.controller'; import { QuotesService } from './quotes.service';
+@Module({imports:[AuthModule,TypeOrmModule.forFeature([Quote,QuoteItem]),CatalogModule,ClientsModule,VehiclesModule],controllers:[QuotesController],providers:[QuotesService],exports:[QuotesService,TypeOrmModule]})export class QuotesModule{}

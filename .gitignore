@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.env
+coverage/
+postgres-data/
+*.log
+.DS_Store
+uploads/*
+!uploads/evidence/
+uploads/evidence/*
+!uploads/evidence/.gitkeep

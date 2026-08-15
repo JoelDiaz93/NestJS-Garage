@@ -1,0 +1,2 @@
+import { Type } from 'class-transformer'; import { IsInt, IsOptional, IsString, IsUUID, Max, Min, MinLength } from 'class-validator';
+export class CreateVehicleDto { @IsUUID() clientId: string; @IsString() @MinLength(3) plate: string; @IsString() make: string; @IsString() model: string; @Type(() => Number) @IsInt() @Min(1950) @Max(2100) year: number; @IsOptional() @IsString() vin?: string; @IsOptional() @IsString() color?: string; @IsOptional() @Type(() => Number) @IsInt() @Min(0) mileage?: number; @IsOptional() @IsString() notes?: string; }
