@@ -1,0 +1,112 @@
+@baseUrl = http://localhost:3000/api/v1
+@accessToken = REPLACE_AFTER_LOGIN
+@clientId = REPLACE
+@vehicleId = REPLACE
+@catalogItemId = REPLACE
+@quoteId = REPLACE
+@workOrderId = REPLACE
+
+### Health
+GET {{baseUrl}}/health
+
+### Login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@garageflow.local",
+  "password": "USE_YOUR_ENV_PASSWORD"
+}
+
+### Create client
+POST {{baseUrl}}/clients
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "fullName": "Cliente Demo",
+  "document": "1712345678",
+  "email": "cliente@example.com",
+  "phone": "+593999000111"
+}
+
+### Create vehicle
+POST {{baseUrl}}/vehicles
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "clientId": "{{clientId}}",
+  "plate": "PAA-1234",
+  "make": "Nissan",
+  "model": "X-Trail",
+  "year": 2010,
+  "mileage": 145000
+}
+
+### Create catalog product
+POST {{baseUrl}}/catalog
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "sku": "PRD-FLT-001",
+  "name": "Filtro de aceite",
+  "type": "product",
+  "price": 12.5,
+  "cost": 7.5,
+  "stock": 10,
+  "minStock": 3
+}
+
+### Stock correction
+PATCH {{baseUrl}}/catalog/{{catalogItemId}}/stock
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "quantity": 5,
+  "reason": "purchase",
+  "note": "Ingreso por compra a proveedor"
+}
+
+### Low stock
+GET {{baseUrl}}/catalog/alerts/low-stock
+Authorization: Bearer {{accessToken}}
+
+### Create quote
+POST {{baseUrl}}/quotes
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "clientId": "{{clientId}}",
+  "vehicleId": "{{vehicleId}}",
+  "discountPct": 5,
+  "validityDays": 15,
+  "items": [
+    { "catalogItemId": "{{catalogItemId}}", "quantity": 1 }
+  ]
+}
+
+### Approve quote
+PATCH {{baseUrl}}/quotes/{{quoteId}}/status
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{ "status": "approved" }
+
+### Create work order
+POST {{baseUrl}}/work-orders/from-quote/{{quoteId}}
+Authorization: Bearer {{accessToken}}
+
+### Start work order
+PATCH {{baseUrl}}/work-orders/{{workOrderId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{ "status": "in_progress" }
+
+### Consume quoted products from stock
+POST {{baseUrl}}/work-orders/{{workOrderId}}/consume-materials
+Authorization: Bearer {{accessToken}}

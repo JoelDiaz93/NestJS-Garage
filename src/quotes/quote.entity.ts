@@ -1,2 +1,42 @@
-import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'; import { Client } from '../clients/client.entity'; import { QuoteStatus } from '../common/enums'; import { Vehicle } from '../vehicles/vehicle.entity'; import { QuoteItem } from './quote-item.entity';
-@Entity('quotes') export class Quote { @PrimaryGeneratedColumn('uuid') id:string; @Column({unique:true}) number:string; @Column({type:'enum',enum:QuoteStatus,default:QuoteStatus.DRAFT}) status:QuoteStatus; @ManyToOne(()=>Client,{eager:true}) @JoinColumn({name:'clientId'}) client:Client; @Column('uuid') clientId:string; @ManyToOne(()=>Vehicle,{eager:true}) @JoinColumn({name:'vehicleId'}) vehicle:Vehicle; @Column('uuid') vehicleId:string; @OneToMany(()=>QuoteItem,item=>item.quote,{cascade:true,eager:true}) items:QuoteItem[]; @Column('numeric',{precision:12,scale:2,default:0}) subtotal:number; @Column('numeric',{precision:12,scale:2,default:0}) tax:number; @Column('numeric',{precision:12,scale:2,default:0}) total:number; @Column({type:'text',nullable:true}) notes?:string; @CreateDateColumn() createdAt:Date; }
+import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { Client } from '../clients/client.entity';
+import { QuoteStatus } from '../common/enums';
+import { Vehicle } from '../vehicles/vehicle.entity';
+import { QuoteItem } from './quote-item.entity';
+
+@Entity('quotes')
+export class Quote {
+  @PrimaryGeneratedColumn('uuid') id: string;
+
+  @Column({ unique: true }) number: string;
+
+  @Column({ type: 'enum', enum: QuoteStatus, enumName: 'quote_status_enum', default: QuoteStatus.DRAFT })
+  status: QuoteStatus;
+
+  @ManyToOne(() => Client, { eager: true, onDelete: 'RESTRICT' })
+  @JoinColumn({ name: 'clientId' }) client: Client;
+  @Column('uuid') clientId: string;
+
+  @ManyToOne(() => Vehicle, { eager: true, onDelete: 'RESTRICT' })
+  @JoinColumn({ name: 'vehicleId' }) vehicle: Vehicle;
+  @Column('uuid') vehicleId: string;
+
+  @OneToMany(() => QuoteItem, (item) => item.quote, { cascade: true, eager: true })
+  items: QuoteItem[];
+
+  @Column('numeric', { precision: 12, scale: 2, default: 0 }) subtotal: number;
+  @Column('numeric', { precision: 5, scale: 2, default: 0 }) discountPct: number;
+  @Column('numeric', { precision: 12, scale: 2, default: 0 }) discountAmount: number;
+  @Column('numeric', { precision: 5, scale: 4, default: 0.15 }) taxRate: number;
+  @Column('numeric', { precision: 12, scale: 2, default: 0 }) tax: number;
+  @Column('numeric', { precision: 12, scale: 2, default: 0 }) total: number;
+
+  @Column({ type: 'text', nullable: true }) notes?: string;
+  @Column({ type: 'timestamptz' }) expiresAt: Date;
+  @Column({ type: 'timestamptz', nullable: true }) approvedAt?: Date;
+  @Column({ type: 'timestamptz', nullable: true }) rejectedAt?: Date;
+  @Column('uuid', { nullable: true }) createdByUserId?: string;
+
+  @CreateDateColumn() createdAt: Date;
+  @UpdateDateColumn() updatedAt: Date;
+}

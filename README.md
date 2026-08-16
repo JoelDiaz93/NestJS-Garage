@@ -1,73 +1,187 @@
 # GarageFlow Platform
 
-Proyecto principal de portafolio basado en los conceptos aprendidos en el curso de NestJS, pero rediseñado como una aplicación real de **gestión de taller automotriz**.
+GarageFlow es una plataforma full-stack de gestión para talleres automotrices, con backend NestJS/PostgreSQL y panel administrativo React/Vite. Nació a partir de conceptos practicados en un curso de NestJS, pero el dominio, las reglas de negocio y la arquitectura fueron rediseñados para convertirlo en un proyecto de portafolio propio.
 
-## Alcance funcional
+## Qué resuelve
 
-- Usuarios administrados por un `admin` y autenticación JWT.
-- Roles: `admin`, `advisor`, `technician`.
-- Clientes.
-- Vehículos asociados a clientes.
-- Catálogo unificado de productos y servicios.
-- Inventario y ajustes de stock.
-- Cotizaciones con cálculo de subtotal, impuesto y total.
-- Conversión de una cotización aprobada a orden de trabajo.
-- Estados de orden de trabajo.
-- Evidencias fotográficas de órdenes de trabajo (JPG/PNG/WEBP, límite de 5 MB).
-- WebSockets para actualizaciones en tiempo real.
-- Swagger/OpenAPI.
-- PostgreSQL + TypeORM.
-- Dashboard Vite mínimo para demostrar Socket.IO.
+GarageFlow concentra el flujo operativo de un taller:
 
-## Inicio rápido
+**Cliente → Vehículo → Cotización → Aprobación → Orden de trabajo → Evidencias → Entrega**
+
+También administra productos/servicios e inventario con trazabilidad de movimientos.
+
+## Stack
+
+- NestJS 11 + TypeScript
+- PostgreSQL + TypeORM
+- JWT + refresh tokens opacos rotativos
+- Passport
+- Socket.IO
+- Swagger/OpenAPI
+- Multer para evidencias
+- Jest
+- Docker / Docker Compose
+- GitHub Actions
+- React 19 + Vite para el panel administrativo
+
+## Funcionalidades
+
+- Usuarios administrados por roles: `admin`, `advisor`, `technician`, con activación/desactivación y reset de contraseña.
+- Login JWT y refresh token rotativo almacenado como hash.
+- Clientes y vehículos.
+- Catálogo de productos y servicios.
+- Ajustes de stock transaccionales con bloqueo pesimista y bitácora de movimientos.
+- Alerta de productos con `stock <= minStock`.
+- Cotizaciones con snapshots de ítems, descuentos, impuesto, vigencia y transiciones de estado controladas.
+- Conversión idempotente de una cotización aprobada a orden de trabajo.
+- Asignación de técnicos y flujo de estados de reparación.
+- Timestamps operativos: asignación, inicio, finalización y entrega.
+- Evidencias JPG/PNG/WEBP con metadata persistida en PostgreSQL.
+- Eventos WebSocket `work-order.updated` autenticados con JWT.
+- Health check de API/base de datos.
+- Migraciones TypeORM; `synchronize` desactivado por defecto.
+- Seed por CLI, sin endpoint HTTP ni contraseña hardcodeada.
+- Panel administrativo para operar usuarios, clientes, vehículos, catálogo, cotizaciones, órdenes, evidencias y consumo de materiales.
+- CI para tests/build del backend y build de ambos frontends.
+
+## Inicio local
+
+### Backend
 
 ```bash
 cp .env.example .env
-docker compose up -d
+docker compose up -d postgres
 npm install
+npm run migration:run
+npm run seed
 npm run start:dev
 ```
 
+API: `http://localhost:3000/api/v1`
+
 Swagger: `http://localhost:3000/docs`
 
-Para datos de demostración:
+Health: `http://localhost:3000/api/v1/health`
 
-```http
-POST /api/v1/seed
+### Panel administrativo
+
+```bash
+cd admin-web
+cp .env.example .env
+npm install
+npm run dev
 ```
 
-El seed crea un administrador de demostración. **Cambie la contraseña inmediatamente y no utilice esas credenciales en producción.**
+Panel: `http://localhost:5174`
 
-## Flujo de demostración recomendado
+### Login del seed
 
-1. Ejecutar seed.
-2. Iniciar sesión en `POST /auth/login` (el seed sólo está habilitado si `SEED_ENABLED=true`).
-3. Crear un cliente.
-4. Registrar su vehículo.
-5. Crear productos/servicios o usar los del seed.
-6. Crear una cotización.
-7. Cambiar la cotización a `approved`.
-8. Crear la orden desde `POST /work-orders/from-quote/:quoteId`.
-9. Actualizar el estado de la orden y observar el evento WebSocket en `live-dashboard`.
+Las credenciales **no están en el código**. Se toman de:
 
-## Diferencias deliberadas frente al proyecto del curso
+```env
+SEED_ADMIN_EMAIL=admin@garageflow.local
+SEED_ADMIN_PASSWORD=choose_a_strong_local_password
+```
 
-- Dominio Tesla/e-commerce reemplazado por operación de taller.
-- Productos ahora conviven con servicios.
-- Se agregan clientes, vehículos, cotizaciones y órdenes de trabajo.
-- Autorización separada de autenticación; los roles no se autoasignan desde un registro público.
-- Configuración por ambiente, sin secretos reales incluidos.
-- `DB_SYNC` es configurable y debe estar desactivado en producción.
-- El WebSocket transmite eventos de negocio, no un chat de demostración.
+Cambie esos valores en su `.env` local antes de ejecutar `npm run seed`.
 
-## Próxima fase
+## Migraciones
 
-- Historial de movimientos de inventario.
-- Persistir metadata de evidencias en PostgreSQL y migrar archivos a S3/objeto storage.
-- PDF de cotización y orden de trabajo.
-- Auditoría (`createdBy`, `updatedBy`, bitácora de cambios).
-- Refresh tokens y recuperación de contraseña.
-- Pruebas unitarias/e2e.
-- Migraciones TypeORM.
-- CI con GitHub Actions.
-- Despliegue con Docker y base de datos administrada.
+El proyecto evita `synchronize: true` como mecanismo de producción.
+
+```bash
+npm run migration:run
+npm run migration:revert
+npm run migration:generate -- src/database/migrations/NombreMigracion
+```
+
+Para Docker Compose completo, el contenedor API usa `DB_MIGRATIONS_RUN=true` y aplica las migraciones al iniciar.
+
+## Flujo de demostración
+
+1. `npm run migration:run`.
+2. `npm run seed`.
+3. `POST /api/v1/auth/login`.
+4. Crear cliente y vehículo.
+5. Crear productos/servicios.
+6. Ajustar inventario indicando motivo.
+7. Crear cotización con descuento/vigencia opcionales.
+8. Enviar/aprobar cotización.
+9. `POST /api/v1/work-orders/from-quote/:quoteId`.
+10. Asignar técnico y avanzar estados.
+11. Consumir materiales de la orden para descontar stock de forma transaccional.
+12. Adjuntar evidencias.
+13. Consultar `GET /api/v1/catalog/alerts/low-stock`.
+14. Observar `work-order.updated` desde el panel o `live-dashboard`.
+
+## Seguridad aplicada
+
+- Passwords bcrypt y nunca serializados en login.
+- Refresh tokens aleatorios almacenados únicamente como SHA-256.
+- Rotación del refresh token en cada renovación.
+- Roles controlados del lado servidor.
+- CORS configurable por lista de orígenes.
+- Configuración de producción rechaza `DB_SYNC=true`, seed habilitado y CORS wildcard.
+- Validación global con `whitelist` + `forbidNonWhitelisted`.
+- Headers defensivos básicos.
+- Upload en memoria: el archivo se escribe sólo después de validar la orden y tipo MIME.
+- Secretos sólo por variables de entorno.
+
+> Para un despliegue distribuido de alto tráfico, el siguiente endurecimiento recomendado es rate limiting compartido (por ejemplo Redis), object storage para evidencias, secret manager, observabilidad y rotación de secretos.
+
+## Estructura
+
+```text
+src/
+├── auth/           # login, refresh/logout, JWT y roles
+├── catalog/        # productos, servicios y movimientos de inventario
+├── clients/
+├── vehicles/
+├── quotes/         # cotizaciones y reglas de transición
+├── work-orders/    # órdenes, técnicos y estados
+├── media/          # evidencias persistidas
+├── realtime/       # Socket.IO
+├── health/
+├── database/       # DataSource + migraciones
+├── config/         # validación de variables de entorno
+└── seed/           # seed ejecutable por CLI
+```
+
+```text
+admin-web/          # React/Vite: panel administrativo completo
+live-dashboard/     # cliente mínimo para demo aislada de Socket.IO
+```
+
+## API de autenticación
+
+```text
+POST /api/v1/auth/login
+POST /api/v1/auth/refresh
+POST /api/v1/auth/logout
+GET  /api/v1/auth/me
+```
+
+El access token debe enviarse como:
+
+```text
+Authorization: Bearer <accessToken>
+```
+
+## Estado del proyecto
+
+GarageFlow V2 ya incluye backend y panel administrativo. La siguiente evolución natural sería PDF de cotizaciones/órdenes, agenda de citas, auditoría general, object storage S3-compatible, rate limiting distribuido y observabilidad.
+
+---
+
+## Publicación gratuita para portfolio
+
+La versión 2.1 incluye soporte específico para un stack gratuito de demostración:
+
+- Render Free Web Service para NestJS + Socket.IO.
+- Render Static Site para el panel React/Vite.
+- Neon PostgreSQL mediante `DATABASE_URL`.
+- Cloudinary para evidencias persistentes.
+- `render.yaml` como infraestructura declarativa.
+- Migraciones automáticas al inicio del servicio Free.
+
+Consulta **[DEPLOY_FREE.md](./DEPLOY_FREE.md)** antes de publicar el repositorio.

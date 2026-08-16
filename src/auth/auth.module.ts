@@ -9,12 +9,24 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { JwtStrategy } from './jwt.strategy';
+import { RefreshToken } from './refresh-token.entity';
 import { RolesGuard } from './roles.guard';
+
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User]), forwardRef(() => UsersModule), PassportModule,
-    JwtModule.registerAsync({ inject: [ConfigService], useFactory: (c: ConfigService) => ({ secret: c.getOrThrow('JWT_SECRET'), signOptions: { expiresIn: c.get('JWT_EXPIRES_IN', '2h') as any } }) }),
+    TypeOrmModule.forFeature([User, RefreshToken]),
+    forwardRef(() => UsersModule),
+    PassportModule,
+    JwtModule.registerAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        secret: config.getOrThrow<string>('JWT_SECRET'),
+        signOptions: { expiresIn: config.get('JWT_EXPIRES_IN', '15m') as any },
+      }),
+    }),
   ],
-  controllers: [AuthController], providers: [AuthService, JwtStrategy, JwtAuthGuard, RolesGuard], exports: [JwtModule, JwtAuthGuard, RolesGuard],
+  controllers: [AuthController],
+  providers: [AuthService, JwtStrategy, JwtAuthGuard, RolesGuard],
+  exports: [JwtModule, JwtAuthGuard, RolesGuard],
 })
 export class AuthModule {}

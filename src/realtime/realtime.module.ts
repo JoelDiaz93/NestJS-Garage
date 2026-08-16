@@ -1,1 +1,11 @@
-import { Module } from '@nestjs/common'; import { AuthModule } from '../auth/auth.module'; import { RealtimeGateway } from './realtime.gateway'; @Module({imports:[AuthModule],providers:[RealtimeGateway],exports:[RealtimeGateway]}) export class RealtimeModule{}
+import { Module } from '@nestjs/common';
+import { AuthModule } from '../auth/auth.module';
+import { UsersModule } from '../users/users.module';
+import { RealtimeGateway } from './realtime.gateway';
+
+@Module({
+  imports: [AuthModule, UsersModule],
+  providers: [RealtimeGateway],
+  exports: [RealtimeGateway],
+})
+export class RealtimeModule {}

@@ -5,8 +5,40 @@ services:
     environment:
       POSTGRES_DB: ${DB_NAME:-garageflow}
       POSTGRES_USER: ${DB_USERNAME:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-change_me}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-change_me_local_only}
     ports:
       - "5432:5432"
     volumes:
-      - ./postgres-data:/var/lib/postgresql/data
+      - garageflow-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres} -d ${DB_NAME:-garageflow}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      DB_HOST: postgres
+      DB_SYNC: "false"
+      DB_MIGRATIONS_RUN: "true"
+      SEED_ENABLED: "false"
+    ports:
+      - "3000:3000"
+    volumes:
+      - garageflow-evidence:/app/uploads/evidence
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/api/v1/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  garageflow-postgres:
+  garageflow-evidence:

@@ -1,0 +1,9 @@
+node_modules
+dist
+coverage
+.env
+.git
+.github
+postgres-data
+uploads/evidence/*
+live-dashboard/node_modules
