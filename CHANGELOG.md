@@ -31,3 +31,10 @@
 - Added Render Blueprint for API + static admin panel.
 - Added free-hosting deployment documentation and Render environment examples.
 - Added frontend notice for free-tier API cold starts.
+
+## 2.2.0 - Admin Web Functional rebuild
+- Rebuilt React/Vite admin panel with stable dependencies and structured API/session handling.
+- Added role-aware navigation and valid quote/work-order transitions.
+- Added advisor-safe assignable technician endpoint.
+- Added evidence listing/viewing, inventory movement history, API health indication and error boundary.
+- Fixed refresh-token concurrency in the frontend.

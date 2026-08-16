@@ -37,6 +37,17 @@ export class UsersService {
     });
   }
 
+  async findAssignableTechnicians() {
+    const users = await this.repo.find({
+      select: { id: true, email: true, fullName: true, roles: true, isActive: true },
+      where: { isActive: true },
+      order: { fullName: 'ASC' },
+    });
+    return users.filter((user) =>
+      user.roles.includes(UserRole.TECHNICIAN) || user.roles.includes(UserRole.ADMIN),
+    );
+  }
+
   async findById(id: string) {
     const user = await this.repo.findOneBy({ id });
     if (!user) throw new NotFoundException('User not found');

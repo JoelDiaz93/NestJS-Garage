@@ -24,6 +24,12 @@ export class UsersController {
     return this.service.create(dto);
   }
 
+  @Get('assignable-technicians')
+  @Roles(UserRole.ADMIN, UserRole.ADVISOR)
+  findAssignableTechnicians() {
+    return this.service.findAssignableTechnicians();
+  }
+
   @Get()
   findAll() {
     return this.service.findAll();

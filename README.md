@@ -185,3 +185,18 @@ La versión 2.1 incluye soporte específico para un stack gratuito de demostraci
 - Migraciones automáticas al inicio del servicio Free.
 
 Consulta **[DEPLOY_FREE.md](./DEPLOY_FREE.md)** antes de publicar el repositorio.
+
+## Admin Web 2.2
+
+The admin interface was rebuilt in v2.2.0. It runs separately on port `5174` during local development.
+
+```bash
+cd admin-web
+cp .env.example .env
+npm install
+npm run typecheck
+npm run build
+npm run dev
+```
+
+Backend CORS must include `http://localhost:5174` (already present in `.env.example`). See `ADMIN_WEB_REVIEW.md` for the review and fixes.

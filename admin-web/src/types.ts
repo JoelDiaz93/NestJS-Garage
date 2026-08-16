@@ -1,7 +1,15 @@
 export type UserRole = 'admin' | 'advisor' | 'technician';
 export type QuoteStatus = 'draft' | 'sent' | 'approved' | 'rejected' | 'expired';
-export type WorkOrderStatus = 'received' | 'diagnosis' | 'waiting_approval' | 'in_progress' | 'ready' | 'delivered' | 'cancelled';
+export type WorkOrderStatus =
+  | 'received'
+  | 'diagnosis'
+  | 'waiting_approval'
+  | 'in_progress'
+  | 'ready'
+  | 'delivered'
+  | 'cancelled';
 export type CatalogItemType = 'product' | 'service';
+export type StockMovementReason = 'purchase' | 'return' | 'correction' | 'work_order' | 'initial';
 
 export interface User {
   id: string;
@@ -37,6 +45,7 @@ export interface Vehicle {
   vin?: string;
   color?: string;
   mileage?: number;
+  notes?: string;
   clientId: string;
   client?: Client;
 }
@@ -52,6 +61,18 @@ export interface CatalogItem {
   minStock: number;
   active: boolean;
   description?: string;
+}
+
+export interface InventoryMovement {
+  id: string;
+  catalogItemId: string;
+  quantityChange: number;
+  stockBefore: number;
+  stockAfter: number;
+  reason: StockMovementReason;
+  note?: string;
+  performedByUserId?: string;
+  createdAt: string;
 }
 
 export interface QuoteItem {
@@ -79,6 +100,7 @@ export interface Quote {
   discountAmount: number | string;
   tax: number | string;
   total: number | string;
+  notes?: string;
   expiresAt: string;
   createdAt: string;
 }
@@ -99,5 +121,17 @@ export interface WorkOrder {
   estimatedTotal: number | string;
   actualTotal?: number | string;
   stockConsumedAt?: string;
+  createdAt: string;
   updatedAt: string;
+}
+
+export interface Evidence {
+  id: string;
+  workOrderId: string;
+  filename: string;
+  originalName: string;
+  mimeType: string;
+  size: number;
+  uploadedByUserId?: string;
+  createdAt: string;
 }
